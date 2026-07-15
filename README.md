@@ -28,6 +28,12 @@
 4. **按键交互**
    - 4 个按键 (GPIO15, GPIO8, GPIO41, GPIO4)，内置消抖处理
 
+5. **OTA 远程升级**
+   - 长按 KEY3 (GPIO41) 超过 3 秒触发 OTA 升级
+   - 通过 HTTPS 从腾讯云 COS 下载固件
+   - 使用自定义分区表，支持双 OTA 槽位（出厂固件 + 两个 OTA 分区）
+   - 升级成功后自动重启
+
 ## 硬件连接
 
 | 外设   | GPIO 引脚 | 说明                       |
@@ -36,7 +42,7 @@
 | 蜂鸣器 | GPIO37    | 低电平触发，报警输出       |
 | KEY1   | GPIO15    | 上拉输入，按下为低电平     |
 | KEY2   | GPIO8     | 上拉输入，切换报警开关     |
-| KEY3   | GPIO41    | 上拉输入                   |
+| KEY3   | GPIO41    | 上拉输入，长按 >3s 触发 OTA 升级 |
 | KEY4   | GPIO4     | 上拉输入                   |
 | UART1  | GPIO17(TX), GPIO18(RX) | 115200bps，连接雷达传感器 |
 
@@ -112,28 +118,36 @@ idf.py -p /dev/ttyACM0 flash monitor
 ## 代码结构
 
 ```
-main/
-├── CMakeLists.txt          # 组件构建配置
-├── Kconfig.projbuild       # 项目 Kconfig 配置项
-├── main.c                  # 主程序入口，蓝牙初始化与 GATT 事件处理
-├── include/
-│   ├── alarm.h             # 报警模块接口
-│   ├── buzzer.h            # 蜂鸣器驱动接口
-│   ├── heart_rate.h        # 心率模拟接口
-│   ├── key.h               # 按键驱动接口
-│   ├── led.h               # LED 驱动接口
-│   ├── radar_receiver.h    # 雷达数据接收器接口
-│   ├── respiration.h       # 呼吸频率模拟接口
-│   └── uart.h              # UART 驱动接口
-└── src/
-    ├── alarm.c             # 报警监控任务实现
-    ├── buzzer.c            # 蜂鸣器 GPIO 控制
-    ├── heart_rate_mock.c   # 心率数据模拟 (可融合雷达数据)
-    ├── key.c               # 按键扫描与消抖
-    ├── led.c               # LED 控制 (GPIO/RMT/SPI)
-    ├── radar_receiver.c    # 雷达帧解析与均值滤波
-    ├── respiration_mock.c  # 呼吸频率模拟 (可融合雷达数据)
-    └── uart.c              # UART1 初始化
+Radar_Communication/
+├── CMakeLists.txt              # 项目构建配置
+├── partitions_ota.csv          # 自定义 OTA 分区表
+├── sdkconfig.defaults.esp32s3  # ESP32-S3 默认配置
+├── main/
+│   ├── CMakeLists.txt          # 组件构建配置
+│   ├── Kconfig.projbuild       # 项目 Kconfig 配置项
+│   ├── main.c                  # 主程序入口，蓝牙初始化与 GATT 事件处理
+│   ├── include/
+│   │   ├── alarm.h             # 报警模块接口
+│   │   ├── buzzer.h            # 蜂鸣器驱动接口
+│   │   ├── heart_rate.h        # 心率模拟接口
+│   │   ├── key.h               # 按键驱动接口
+│   │   ├── led.h               # LED 驱动接口
+│   │   ├── ota.h               # OTA 升级模块接口
+│   │   ├── radar_receiver.h    # 雷达数据接收器接口
+│   │   ├── respiration.h       # 呼吸频率模拟接口
+│   │   └── uart.h              # UART 驱动接口
+│   └── src/
+│       ├── alarm.c             # 报警监控任务实现
+│       ├── buzzer.c            # 蜂鸣器 GPIO 控制
+│       ├── heart_rate_mock.c   # 心率数据模拟 (可融合雷达数据)
+│       ├── key.c               # 按键扫描与消抖
+│       ├── led.c               # LED 控制 (GPIO/RMT/SPI)
+│       ├── ota.c               # OTA 升级实现 (WiFi 连接 + HTTPS 下载)
+│       ├── radar_receiver.c    # 雷达帧解析与均值滤波
+│       ├── respiration_mock.c  # 呼吸频率模拟 (可融合雷达数据)
+│       └── uart.c              # UART1 初始化
+└── server_certs/
+    └── ca_cert.pem             # HTTPS OTA 验证证书
 ```
 
 ## 工作流程

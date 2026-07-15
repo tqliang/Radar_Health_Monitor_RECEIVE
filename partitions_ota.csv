@@ -1,0 +1,10 @@
+# Name,   Type, SubType,  Offset,   Size,      Flags
+# 分区表用于 ESP32-S3-N16R8 (16MB Flash) OTA 升级
+# 注意: 分区表本身位于 0x8000,占用 0x1000
+nvs,      data, nvs,      0x9000,   0x10000,
+otadata,  data, ota,      0x19000,  0x2000,
+phy_init, data, phy,      0x1B000,  0x1000,
+nvs_keys, data, nvs_keys, 0x1C000,  0x1000,
+factory,  app,  factory,  0x20000,  0x400000,
+ota_0,    app,  ota_0,    0x420000, 0x400000,
+ota_1,    app,  ota_1,    0x820000, 0x400000,

@@ -29,6 +29,7 @@
 #include "buzzer.h"
 #include "alarm.h"
 #include "key.h"
+#include "ota.h"
 
 #define PROFILE_NUM 3
 #define HEART_PROFILE_APP_ID 0
@@ -733,6 +734,9 @@ void app_main(void)
 
     /* 初始化按键。 */
     key_init();
+
+    /* 初始化 OTA 按键监控 (KEY3 长按 >3s 触发 OTA 升级)。 */
+    ota_init();
 
     /* 初始化蜂鸣器 (GPIO37, 低电平触发)。 */
     buzzer_init();
